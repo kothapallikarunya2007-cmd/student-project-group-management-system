@@ -1,0 +1,6 @@
+{
+  "name": "student-project-group-management-system",
+  "private": true,
+  "scripts": { "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"", "db:migrate": "npm run migrate --prefix backend", "start": "npm run start --prefix backend" },
+  "devDependencies": { "concurrently": "^9.1.2" }
+}
