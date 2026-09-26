@@ -1,5 +1,14 @@
+-- =======================================================================
+-- Student Project Group Management System (SPGMS) - Supabase Schema
+-- =======================================================================
+-- You can run this script directly in the Supabase Dashboard -> SQL Editor
+-- OR connect your backend via DATABASE_URL to run migrations automatically.
+-- =======================================================================
+
+-- 1. Enable required extensions
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+-- 2. Custom Enumeration Types
 DO $$ BEGIN
     CREATE TYPE user_role AS ENUM ('HOD','FACULTY','STUDENT');
 EXCEPTION
@@ -36,6 +45,7 @@ EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
+-- 3. Core Tables
 CREATE TABLE IF NOT EXISTS workspaces (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
@@ -159,10 +169,12 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- 4. Indices
 CREATE INDEX IF NOT EXISTS users_workspace_idx ON users(workspace_id);
 CREATE INDEX IF NOT EXISTS records_workspace_idx ON master_student_records(workspace_id);
 CREATE INDEX IF NOT EXISTS groups_faculty_idx ON groups(faculty_id);
 
+-- 5. Supabase PostgREST Permissions
 DO $$ BEGIN
     GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
     GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
