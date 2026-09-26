@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: spgms-backend
+    env: node
+    plan: free
+    buildCommand: npm install --prefix backend
+    startCommand: npm run start --prefix backend
+    envVars:
+      - key: PORT
+        value: 4000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        value: https://vlyfifpdsmimphchitnm.supabase.co
+      - key: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+        value: sb_publishable_co9uWjRY8D5PSec1rezazA_O2P2PyHs
+      - key: FRONTEND_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
