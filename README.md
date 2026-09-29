@@ -11,7 +11,7 @@ Full-stack workspace app for HODs, faculty, and students. It uses Express/Postgr
 With no `DATABASE_URL`, the API automatically creates a persistent embedded PGlite database in `backend/.pglite`; this is the fastest way to run the app locally. Set `DATABASE_URL` to use production PostgreSQL instead. The schema is automatically installed on first startup. Docker PostgreSQL remains available with `docker compose up -d db`, after which run `npm run db:migrate`.
 5. Open `http://localhost:5173`.
 
-The HOD signup creates a workspace and invite handle. Import an `.xlsx` sheet with a roll number column (`roll_number`, `Roll Number`, or `Roll No` are accepted), plus optional `name`, `cgpa`, and `section` columns. Column names are matched without regard to capitalization, spaces, or punctuation. Approve join requests, save setup, then generate groups. Group creation requires the configured group/faculty counts to match. Re-generating deletes only unlocked groups.
+The HOD signup creates a workspace and invite handle. Import an `.xlsx` sheet with a roll number column (`roll_number`, `Roll Number`, or `Roll No` are accepted), plus optional `name`, `cgpa`, and `section` columns. Column names are matched without regard to capitalization, spaces, or punctuation. Importing creates roster records; it does not create student accounts. Students must join with the workspace invite code and a roster roll number, then the HOD must approve each request as a Student before those profiles can be grouped. Group creation requires the configured group/faculty counts to match. Re-generating deletes only unlocked groups.
 
 ## Deploy the frontend to Vercel
 

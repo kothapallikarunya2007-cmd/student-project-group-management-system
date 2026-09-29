@@ -12,6 +12,7 @@ import fs from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import { Client as Notion } from '@notionhq/client';
 import { supabase, checkSupabaseConnection } from './supabase.js';
+import { requireApprovedStudents } from './grouping.js';
 import { parseRosterRows } from './roster.js';
 
 const app = express();
@@ -293,21 +294,23 @@ app.post('/api/hod/generate-groups', auth(['HOD']), async (req, res) => {
     }
     const locked = (await c.query("SELECT 1 FROM groups WHERE workspace_id=$1 AND status='LOCKED'", [ws])).rowCount;
     if (locked) throw Error('Cannot regenerate while locked groups exist.');
+    const students = requireApprovedStudents((await c.query("SELECT sp.* FROM student_profiles sp JOIN users u ON u.id=sp.user_id WHERE u.workspace_id=$1 AND u.status='APPROVED' AND u.role='STUDENT' ORDER BY sp.cgpa DESC NULLS LAST", [ws])).rows);
     await c.query("DELETE FROM groups WHERE workspace_id=$1 AND status='FORMING'", [ws]);
-    const students = (await c.query("SELECT sp.* FROM student_profiles sp JOIN users u ON u.id=sp.user_id WHERE u.workspace_id=$1 AND u.status='APPROVED' AND u.role='STUDENT' ORDER BY sp.cgpa DESC NULLS LAST", [ws])).rows;
     const bands = Array.from({ length: config.num_groups }, () => []);
     students.forEach((s, i) => bands[i % config.num_groups].push(s));
+    let groupCount = 0;
     for (let i = 0; i < bands.length; i++) {
       bands[i].sort(() => Math.random() - .5);
       for (let n = 0; n < bands[i].length; n += config.team_size) {
         const g = (await c.query("INSERT INTO groups(workspace_id,faculty_id,cgpa_band) VALUES($1,$2,$3) RETURNING id", [ws, fac[i].id, String.fromCharCode(65 + i)])).rows[0];
+        groupCount++;
         for (const s of bands[i].slice(n, n + config.team_size)) {
           await c.query('INSERT INTO group_members(group_id,student_id) VALUES($1,$2)', [g.id, s.id]);
         }
       }
     }
     await c.query('COMMIT');
-    res.json({ message: 'Groups generated', students: students.length });
+    res.json({ message: `Groups generated: ${students.length} students assigned to ${groupCount} groups.`, students: students.length, groups: groupCount });
   } catch (e) {
     await c.query('ROLLBACK');
     res.status(400).json({ error: e.message });
