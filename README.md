@@ -15,7 +15,7 @@ The HOD signup creates a workspace and invite handle. Import an `.xlsx` sheet wi
 
 ## Deploy the frontend to Vercel
 
-The Vercel configuration builds the React frontend and forwards `/api/*` requests to the hosted Render API at `https://student-project-group-management-system.onrender.com`. Deploy the repository with its root directory set to the repository root; the included `vercel.json` provides the install, build, output, and API rewrite settings.
+The Vercel configuration builds the React frontend and forwards `/api/*` requests to the hosted Render API at `https://student-project-group-management-system.onrender.com`. Set the Vercel project's Root Directory to `frontend`; the included `vercel.json` commands and output directory are relative to that folder.
 
 Set the backend's production environment variables in Render, including a strong `JWT_SECRET` and a persistent PostgreSQL `DATABASE_URL`. After deploying the frontend, open `/api/health` on the Vercel domain to verify the proxy reaches the API. The first request may take longer if the Render service is waking from sleep.
 
