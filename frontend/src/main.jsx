@@ -215,7 +215,7 @@ function HOD() {
     body.append('file', e.target.files[0]);
     api('/hod/import', { method: 'POST', body })
       .then(r => {
-        setNote(`${r.imported} roster records imported.`);
+        setNote(`${r.imported} roster records imported.${r.skipped ? ` ${r.skipped} rows skipped because they have no roll number.` : ''}`);
         load();
       })
       .catch(e => setNote(msg(e)));

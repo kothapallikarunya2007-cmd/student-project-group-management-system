@@ -12,6 +12,7 @@ import fs from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import { Client as Notion } from '@notionhq/client';
 import { supabase, checkSupabaseConnection } from './supabase.js';
+import { parseRosterRows } from './roster.js';
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -260,16 +261,15 @@ app.patch('/api/hod/requests/:id', auth(['HOD']), async (req, res) => {
 
 app.post('/api/hod/import', auth(['HOD']), upload.single('file'), async (req, res) => {
   try {
+    if (!req.file) return res.status(400).json({ error: 'Choose an Excel file to import.' });
     const book = XLSX.read(req.file.buffer);
+    if (!book.SheetNames.length) return res.status(400).json({ error: 'The Excel file has no worksheets.' });
     const rows = XLSX.utils.sheet_to_json(book.Sheets[book.SheetNames[0]], { defval: null });
-    let count = 0;
-    for (const row of rows) {
-      const roll = row.roll_number ?? row.RollNumber ?? row['Roll Number'];
-      if (!roll) continue;
-      await q('INSERT INTO master_student_records(workspace_id,roll_number,name,cgpa,section,uploaded_from_file) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(workspace_id,roll_number) DO UPDATE SET name=EXCLUDED.name,cgpa=EXCLUDED.cgpa,section=EXCLUDED.section', [req.user.workspaceId, String(roll), (row.name ?? row.Name ?? ''), (row.cgpa ?? row.CGPA ?? null), (row.section ?? row.Section ?? null), req.file.originalname]);
-      count++;
+    const { records, skipped } = parseRosterRows(rows);
+    for (const record of records) {
+      await q('INSERT INTO master_student_records(workspace_id,roll_number,name,cgpa,section,uploaded_from_file) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(workspace_id,roll_number) DO UPDATE SET name=EXCLUDED.name,cgpa=EXCLUDED.cgpa,section=EXCLUDED.section', [req.user.workspaceId, record.rollNumber, record.name, record.cgpa, record.section, req.file.originalname]);
     }
-    res.json({ imported: count });
+    res.json({ imported: records.length, skipped });
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
